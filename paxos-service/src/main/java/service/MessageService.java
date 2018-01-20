@@ -22,15 +22,23 @@ public class MessageService{
     public static String MESSAGE_CONSTANT = "message";
     public static String ERROR_MESSAGE = "err_msg";
     public static String MESSAGE_NOT_FOUND ="Message not found";
+    public static String MESSAGE_EXAMPLE = "Please provide message. Example: { \"message\" : \"foo\"}";
 
 
     @RequestMapping(method = RequestMethod.POST)
     public Response createHashService(@RequestBody JsonNode messageJson) {
-        String message = messageJson.get(MESSAGE_CONSTANT).asText();
+        JSONObject jsonObject = new JSONObject();
+        String message;
+        if(messageJson.has(MESSAGE_CONSTANT)) {
+            message = messageJson.get(MESSAGE_CONSTANT).asText();
+        }
+        else{
+            jsonObject.put(ERROR_MESSAGE,MESSAGE_EXAMPLE);
+            return Response.status(Response.Status.BAD_REQUEST).entity(jsonObject).build();
+        }
         String sha256hex = Hashing.sha256()
                 .hashString(message, StandardCharsets.UTF_8)
                 .toString();
-        JSONObject jsonObject = new JSONObject();
         jsonObject.put(DIGEST_CONSTANT,sha256hex);
         biMap.put(message,sha256hex);
         return Response.status(Response.Status.OK).entity(jsonObject).build();
