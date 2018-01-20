@@ -2,9 +2,13 @@ package service;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.hash.Hashing;
 import org.json.simple.JSONObject;
 import org.springframework.web.bind.annotation.*;
+
+import javax.ws.rs.core.Response;
 import java.nio.charset.StandardCharsets;
 
 
@@ -12,31 +16,37 @@ import java.nio.charset.StandardCharsets;
 @RestController
 @RequestMapping("/messages")
 public class MessageService{
+    BiMap<String, String> biMap = HashBiMap.create();
 
     public static String DIGEST_CONSTANT = "digest";
     public static String MESSAGE_CONSTANT = "message";
-
-
+    public static String ERROR_MESSAGE = "err_msg";
+    public static String MESSAGE_NOT_FOUND ="Message not found";
 
 
     @RequestMapping(method = RequestMethod.POST)
-    public JSONObject createHashService(@RequestBody JsonNode messageJson) {
+    public Response createHashService(@RequestBody JsonNode messageJson) {
+        String message = messageJson.get(MESSAGE_CONSTANT).asText();
         String sha256hex = Hashing.sha256()
-                .hashString(messageJson.get(MESSAGE_CONSTANT).asText(), StandardCharsets.UTF_8)
+                .hashString(message, StandardCharsets.UTF_8)
                 .toString();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(DIGEST_CONSTANT,sha256hex);
-        return jsonObject;
+        biMap.put(message,sha256hex);
+        return Response.status(Response.Status.OK).entity(jsonObject).build();
     }
-
-
 
     @RequestMapping(value = "/{hash}", method = RequestMethod.GET)
-    public String getMessageService(@PathVariable String hash) {
-        return hash;
+    public Response getMessageService(@PathVariable String hash) {
+        JSONObject jsonObject = new JSONObject();
+        if(biMap.containsValue(hash)){
+            String key = biMap.inverse().get(hash).toString();
+            jsonObject.put(MESSAGE_CONSTANT,key);
+            return Response.status(Response.Status.OK).entity(jsonObject).build();
+        }
+        jsonObject.put(ERROR_MESSAGE,MESSAGE_NOT_FOUND);
+        return Response.status(Response.Status.NOT_FOUND).entity(jsonObject).build();
+
     }
-
-
-
 
 }
