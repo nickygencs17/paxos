@@ -1,2 +1,2 @@
 .DS_Store 
-/paxos/paxos-service/.idea 
+/paxos/paxos-service/.idea/* 
