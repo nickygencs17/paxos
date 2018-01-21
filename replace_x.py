@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+#Big O = 2^n
 import sys
 
 string = sys.argv[1].replace('X','{}')
